@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
 
-app = FastAPI()
+app = FastAPI(title="User Service", description="User Service for ML Powered E-commerce")
+
 
 class UserCreate(BaseModel):
     name: str
@@ -21,7 +22,7 @@ user_id_counter = 1 # to generate unique user ids
 def user_health():
     return {"status": "OK"}
 
-@app.post("/user-create")
+@app.post("/user-create", response_model=UserResponse)
 async def user_create(user_create: UserCreate):
     global user_id_counter
 
@@ -35,3 +36,11 @@ async def user_create(user_create: UserCreate):
     user_id_counter += 1
     return user_data
     
+
+@app.get("/user/{user_id}", response_model=UserResponse)
+
+async def user_get(user_id: int):
+    for user in users:
+        if user["id"] == user_id:
+            return user
+    raise HTTPException(status_code=404, detail="User not found")
