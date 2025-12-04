@@ -44,3 +44,8 @@ async def user_get(user_id: int):
         if user["id"] == user_id:
             return user
     raise HTTPException(status_code=404, detail="User not found")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8001)
