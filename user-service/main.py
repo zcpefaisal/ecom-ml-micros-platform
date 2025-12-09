@@ -37,7 +37,7 @@ async def user_create(user_create: UserCreate):
     return user_data
     
 
-@app.get("/user/{user_id}", response_model=UserResponse)
+@app.get("/users/{user_id}", response_model=UserResponse)
 
 async def user_get(user_id: int):
     for user in users:

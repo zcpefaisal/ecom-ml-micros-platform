@@ -35,6 +35,7 @@ products_db = [
 def get_products():
     return products_db
 
+
 @app.get("/products/{product_id}", response_model=Product)
 def get_product(product_id: int):
     for product in products_db:
