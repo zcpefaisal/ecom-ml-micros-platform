@@ -6,6 +6,7 @@ app = FastAPI(title="API Getway", description="API Getway for AI Powered E-comme
 
 USER_SERVICE_URL = "http://localhost:8001"
 PRODUCT_SERVICE_URL = "http://localhost:8002"
+ORDER_SERVICE_URL = "http://localhost:8003"
 
 @app.get("/")
 def root():
@@ -114,6 +115,30 @@ async def get_async_products():
 
         # Use response.json() to extract the data payload
         return response.json()
+
+
+
+@app.post("/orders/")
+async def create_order(order_data: dict):
+    # Use synchronous Client
+    async with httpx.AsyncClient() as client:
+        # Use synchronous client.get() method (no 'await')
+        response = await client.post(f"{ORDER_SERVICE_URL}/orders/", json=order_data)
+        # Use response.json() to extract the data payload
+        return response.json()
+
+@app.get("/orders/{order_id}")
+async def get_order(order_id: str):
+    # Use synchronous Client
+    async with httpx.AsyncClient() as client:
+        # Use synchronous client.get() method (no 'await')
+        response = await client.get(f"{ORDER_SERVICE_URL}/orders/{order_id}")
+        # Use response.json() to extract the data payload
+        return response.json()
+
+
+
+
 
 
 
