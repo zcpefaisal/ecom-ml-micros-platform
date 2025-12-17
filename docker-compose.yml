@@ -3,15 +3,21 @@ services:
     build: ./api-getway
     ports:
       - "8000:8000"
-    # --- 💡 CRITICAL FIX: ENVIRONMENT VARIABLES ---
+    # --- CRITICAL FIX: ENVIRONMENT VARIABLES ---
     environment:
       # Use the service name (user-service) as the hostname
-      USER_SERVICE_URL: http://user-service:8001
-      PRODUCT_SERVICE_URL: http://product-service:8002
+      USER_SERVICE_URL_DOCKER: http://user-service:8001
+
+      # Use the service name (product-service) as the hostname
+      PRODUCT_SERVICE_URL_DOCKER: http://product-service:8002
+
+      # Use the service name (order-service) as the hostname
+      ORDER_SERVICE_URL_DOCKER: http://order-service:8003
     # ---------------------------------------------
     depends_on:
       - user-service
       - product-service
+      - order-service
   
   user-service:
     build: ./user-service
@@ -22,3 +28,8 @@ services:
     build: ./product-service
     ports:
       - "8002:8002"
+  
+  order-service:
+    build: ./order-service
+    ports:
+      - "8003:8003"
