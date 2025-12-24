@@ -43,7 +43,7 @@ services:
     volumes:
       - user_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5432:5432" # for avoid pgsql port conflict set the port maping properly [Each must have a unique host port]
   # Seperate database for product microservice
   product-db:
     image: postgres:13
@@ -52,9 +52,9 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: productdb
     volumes:
-      - user_data:/var/lib/postgresql/data
+      - product_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432" # for avoid pgsql port conflict set the port maping properly [Each must have a unique host port]
   # Seperate database for order microservice
   order-db:
     image: postgres:13
@@ -63,10 +63,10 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: orderdb
     volumes:
-      - user_data:/var/lib/postgresql/data
+      - order_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
-  volumes:
-    user_data:
-    product_data:
-    order_data:
+      - "5434:5432" # for avoid pgsql port conflict set the port maping properly [Each must have a unique host port]
+volumes:
+  user_data:
+  product_data:
+  order_data:
