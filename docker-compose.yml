@@ -33,3 +33,40 @@ services:
     build: ./order-service
     ports:
       - "8003:8003"
+  # Seperate database for user microservice
+  user-db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: userdb
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  # Seperate database for product microservice
+  product-db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: productdb
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  # Seperate database for order microservice
+  order-db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: orderdb
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  volumes:
+    user_data:
+    product_data:
+    order_data:
