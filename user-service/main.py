@@ -1,50 +1,80 @@
-from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session, select
+from typing import List
+import logging
+
+from models import User, UserCreate, UserRead, UserUpdate
+from database import engine, create_db_and_tables, get_session
+from auth import hash_password, verify_password, create_access_token
+
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="User Service", description="User Service for ML Powered E-commerce")
 
 
-class UserCreate(BaseModel):
-    name: str
-    email: str
-    password: str
+#CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class UserResponse(BaseModel):
-    id: int
-    name: str
-    email: str
+
+# Startup event
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+    logger.info("Database tables created")
 
 
-users = []
-user_id_counter = 1 # to generate unique user ids
+# Health Check
+@app.get("/health", tags=["Health"])
+def health_check():
+    return {"status": "ok", "service": "user-service"}
 
-@app.get("/user-health")
-def user_health():
-    return {"status": "OK"}
+# Create User
+@app.post("/user-create", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+def user_create(user_create: UserCreate, session: Session = Depends(get_session)):
 
-@app.post("/user-create", response_model=UserResponse)
-async def user_create(user_create: UserCreate):
-    global user_id_counter
+    existing_user = session.exec(
+        select(User).where(User.email == user_create.email)
+    ).first()
 
-    user_data = {
-        "id": user_id_counter, # this will generate from DB auto increment
-        "name": user_create.name,
-        "email": user_create.email,
-        "password": user_create.password # this should be hashed
-    }
-    users.append(user_data)
-    user_id_counter += 1
-    return user_data
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Email already registered"
+        )
+    hashed_pwd = hash_password(user_create.password)
+    db_user = User(
+        email=user_create.email,
+        full_name=user_create.full_name,
+        hashed_password=hashed_pwd
+    )
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    logger.info(f"User created with email: {db_user.email}")
+    return db_user
+
     
-
-@app.get("/users/{user_id}", response_model=UserResponse)
-
-async def user_get(user_id: int):
-    for user in users:
-        if user["id"] == user_id:
-            return user
-    raise HTTPException(status_code=404, detail="User not found")
-
+# Get user by ID
+@app.get("/users/{user_id}", response_model=UserRead)
+def user_get(user_id: int, session: Session = Depends(get_session)):
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="User not found"
+        )
+    return user
 
 if __name__ == "__main__":
     import uvicorn
