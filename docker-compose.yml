@@ -23,16 +23,27 @@ services:
     build: ./user-service
     ports:
       - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@user-db:5432/userdb
+    depends_on:
+      - user-db
   
   product-service:
     build: ./product-service
     ports:
       - "8002:8002"
-  
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@product-db:5432/productdb
+    depends_on:
+      - product-db
   order-service:
     build: ./order-service
     ports:
       - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@order-db:5432/orderdb
+    depends_on:
+      - order-db
   # Seperate database for user microservice
   user-db:
     image: postgres:13

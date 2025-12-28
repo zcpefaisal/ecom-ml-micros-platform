@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import EmailStr
 
 class UserBase(SQLModel):
-    email: EmailStr = Field(index=True, unique=True)
+    email: str = Field(index=True, unique=True)
     full_name: str
     is_active: bool = True
 
