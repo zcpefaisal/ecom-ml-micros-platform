@@ -33,7 +33,7 @@ def on_startup():
 def health_check():
     return {"status": "ok", "service": "product-service"}
 
-
+# Create product
 @app.post("/products/", response_model=ProductRead, status_code=status.HTTP_201_CREATED)
 def create_product(product: ProductCreate, session: Session = Depends(get_session)):
     db_product = Product.from_orm(product)
@@ -43,6 +43,7 @@ def create_product(product: ProductCreate, session: Session = Depends(get_sessio
     return db_product
 
 
+# Get products with optional filters
 @app.get("/products", response_model=List[ProductRead])
 def get_products(
     skip: int = 0,
@@ -67,6 +68,7 @@ def get_products(
     return products
 
 
+# Get product by ID
 @app.get("/products/{product_id}", response_model=ProductRead)
 def get_product(product_id: int, session: Session = Depends(get_session)):
     product = session.get(Product, product_id)
@@ -76,7 +78,42 @@ def get_product(product_id: int, session: Session = Depends(get_session)):
             detail="Product Not Found"
         )
     return product
-    
+
+# Update product by ID
+@app.patch("/products/{product_id}", response_model=ProductRead)
+def update_product(product_id: int, product_update: ProductUpdate, session: Session = Depends(get_session)):
+    db_product = session.get(Product, product_id)
+    if not db_product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product Not Found"
+        )
+    product_data = product_update.dict(exclude_unset=True)
+    for key, value in product_data.items():
+        setattr(db_product, key, value)
+
+    session.add(db_product)
+    session.commit()
+    session.refresh(db_product)
+    return db_product
+
+
+# Delete product by ID
+@app.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(product_id: int, session: Session = Depends(get_session)):
+    product = session.get(Product, product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Product Not Found"
+        )
+    session.delete(product)
+    session.commit()
+    return {"detail": "Product deleted successfully"}
+
+
+
+
 
 if __name__ == "__main__":
     import uvicorn
