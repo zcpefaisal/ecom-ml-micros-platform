@@ -7,6 +7,7 @@ import logging
 from models import Order, OrderItem, OrderCreate, OrderRead, OrderStatus
 from database import create_db_and_tables, get_session
 
+# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -20,18 +21,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+# Startup event
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
     logger.info("Database tables created")
 
-
+# Health Check
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "order-service"}
 
-
+# Create a new order
 @app.post("/orders/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
 def create_order(order_data: OrderCreate, session: Session = Depends(get_session)):
 
@@ -50,7 +51,7 @@ def create_order(order_data: OrderCreate, session: Session = Depends(get_session
     session.commit()
     session.refresh(db_order)
 
-    #Create OrderItem instances
+    # Create OrderItem instances
     for item in order_data.items:
         db_item = OrderItem(
             order_id=db_order.id,
@@ -66,22 +67,45 @@ def create_order(order_data: OrderCreate, session: Session = Depends(get_session
 
     return db_order
 
+# Get order by ID
+@app.get("/orders/{order_id}", response_model=OrderRead)
+def get_order(order_id: int, session: Session = Depends(get_session)):
+    db_order = session.get(Order, order_id)
+    if not db_order:
+        raise HTTPException(
+            status_code=404, 
+            detail="Order not found"
+        )
+    return db_order
 
-@app.get("/orders/{order_id}")
-def get_order(order_id: str):
-    if order_id not in orders_db:
-        raise HTTPException(status_code=404, detail="Order not found for this order id")
-    return orders_db[order_id]
+# Get orders for a specific user
+@app.get("/users/{user_id}/orders", response_model=List[OrderRead])
+def get_user_orders(user_id: int, session: Session = Depends(get_session)):
+    statements = select(Order).where(Order.user_id == user_id)
+    db_orders = session.exec(statements).all()
+    if not db_orders:
+        raise HTTPException(
+            status_code=404, 
+            detail="Order not found for this user"
+        )
+    return db_orders
 
+# Update order status
+@app.patch("/orders/{order_id}/status", response_model=OrderRead)
+def update_order_status(order_id: int, status: OrderStatus, session: Session = Depends(get_session)):
+    db_order = session.get(Order, order_id)
+    if not db_order:
+        raise HTTPException(
+            status_code=404, 
+            detail="Order not found"
+        )
+    db_order.status = status
+    session.add(db_order)
+    session.commit()
+    session.refresh(db_order)
 
-@app.get("/users/{user_id}/orders")
-def get_user_orders(user_id: int):
-    user_orders = [order for order in orders_db.values() if order["user_id"] == user_id]
-    if not user_orders:
-        raise HTTPException(status_code=404, detail="Order not found for this user")
-    return user_orders
-
-
+    logger.info(f"Order ID: {db_order.id} status updated to {db_order.status}")
+    return db_order
 
 
 if __name__ == "__main__":

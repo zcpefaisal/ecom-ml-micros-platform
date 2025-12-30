@@ -12,7 +12,7 @@ class OrderStatus(str, Enum):
 
 # Base model for OrderItem (creating/reading)
 class OrderItemBase(SQLModel):
-    prodict_id: int = Field(foreign_key="product.id")
+    prodict_id: int
     quantity: int = Field(gt=0)
     price: float = Field(gt=0)
 
@@ -36,7 +36,7 @@ class Order(OrderBase, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     items: List[OrderItem] = Relationship(
         back_populates="order",
-        sa_ralationship_kwargs={"cascade": "all, delete-orphan"}
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
 
 # Pydantic models for API request
