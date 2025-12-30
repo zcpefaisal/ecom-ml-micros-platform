@@ -1,57 +1,70 @@
-from datetime import datetime
-from mimetypes import init
-import uuid
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session, select
 from typing import List
+import logging 
+
+from models import Order, OrderItem, OrderCreate, OrderRead, OrderStatus
+from database import create_db_and_tables, get_session
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Order Service", description="Order Service for ML Powerd E-commerce")
 
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/order-health")
-def order_health():
-    return {"status": "OK"}
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+    logger.info("Database tables created")
 
 
-class OrderItem(BaseModel):
-    product_id: int
-    quantity: int
-    price: float
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "order-service"}
 
-class OrderCreate(BaseModel):
-    user_id: int
-    items: List[OrderItem]
-    shipping_address: str
 
-class OrderResponse(BaseModel):
-    order_id: str
-    user_id: int
-    items: List[OrderItem]
-    total_amount: float
-    status: str
-    created_at: datetime
-
-# Order store in-memory
-orders_db = {}
-
-@app.post("/orders/", response_model=OrderResponse)
-def order_create(order_data: OrderCreate):
-    order_id = str(uuid.uuid4())
+@app.post("/orders/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
+def create_order(order_data: OrderCreate, session: Session = Depends(get_session)):
 
     # Calculate item total price
     total_amount = sum(item.price * item.quantity for item in order_data.items)
+    
+    # Create Order instance
+    db_order = Order(
+        user_id=order_data.user_id,
+        shipping_address=order_data.shipping_address,
+        total_amount=total_amount,
+        status=OrderStatus.PENDING
+    )
 
-    order = {
-        "order_id": order_id,
-        "user_id": order_data.user_id,
-        "items": [item.dict() for item in order_data.items],
-        "total_amount": total_amount,
-        "status": "pending",
-        "created_at": datetime.utcnow()
-    }
+    session.add(db_order)
+    session.commit()
+    session.refresh(db_order)
 
-    orders_db[order_id] = order
-    return order
+    #Create OrderItem instances
+    for item in order_data.items:
+        db_item = OrderItem(
+            order_id=db_order.id,
+            prodict_id=item.prodict_id,
+            quantity=item.quantity,
+            price=item.price
+        )
+        session.add(db_item)
+    session.commit()
+    session.refresh(db_order)
+    
+    logger.info(f"Order created with ID: {db_order.id} for User ID: {db_order.user_id}")
+
+    return db_order
 
 
 @app.get("/orders/{order_id}")
