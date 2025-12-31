@@ -7,6 +7,7 @@ import logging
 from models import User, UserCreate, UserRead, UserUpdate
 from database import engine, create_db_and_tables, get_session
 from auth import hash_password, verify_password, create_access_token
+from init_data import init_data 
 
 
 # Setup logging
@@ -30,6 +31,7 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+    init_data() # Initialize default data
     logger.info("Database tables created")
 
 
