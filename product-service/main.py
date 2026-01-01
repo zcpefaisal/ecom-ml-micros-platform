@@ -6,6 +6,7 @@ import logging
 
 from models import Product, ProductBase, ProductCreate, ProductRead, ProductUpdate
 from database import get_session, engine, create_db_and_tables
+from init_data import seed_products
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +27,7 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+    seed_products() # Initialize default product data
     logger.info("Database tables created")
 
 
