@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from typing import List, Optional
 import logging
+import os
 
 from models import Product, ProductBase, ProductCreate, ProductRead, ProductUpdate
 from database import get_session, engine, create_db_and_tables
@@ -27,7 +28,11 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
-    seed_products() # Initialize default product data
+    
+    if os.getenv("ENVIRONMENT") in ["development", "testing"]:
+        print(os.getenv("ENVIRONMENT"))
+        seed_products() # Initialize default product data
+    
     logger.info("Database tables created")
 
 
