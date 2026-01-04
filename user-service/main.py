@@ -3,12 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from typing import List
 import logging
+import asyncio
 
 from models import User, UserCreate, UserRead, UserUpdate
 from database import engine, create_db_and_tables, get_session
 from auth import hash_password, verify_password, create_access_token
 from init_data import init_data 
-
+from event_handler import EventHandler
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="User Service", description="User Service for ML Powered E-commerce")
 
+event_handler = EventHandler()
 
 #CORS Middleware
 app.add_middleware(
@@ -90,6 +92,15 @@ def create_user(user_create: UserCreate, session: Session = Depends(get_session)
     session.refresh(db_user)
 
     logger.info(f"User created with email: {db_user.email}")
+
+    user_data = {
+        "user_id": db_user.id,
+        "email": db_user.email,
+        "full_name": user_data.full_name
+    }
+
+    asyncio.create_task(event_handler.send_user_created(user_data))
+
     return db_user
 
     
