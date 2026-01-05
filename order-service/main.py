@@ -3,10 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from typing import List
 import logging 
+import asyncio
 
 from models import Order, OrderItem, OrderCreate, OrderRead, OrderStatus
 from database import create_db_and_tables, get_session
-
+import event_consume
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +27,10 @@ app.add_middleware(
 def on_startup():
     create_db_and_tables()
     logger.info("Database tables created")
+
+    # Start Kafka consumer in background
+    asyncio.create_task(event_consume.start_kafka_consumer())
+    logger.info("Order service started with kafka consumer")
 
 # Health Check
 @app.get("/health")
