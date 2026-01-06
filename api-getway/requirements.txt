@@ -5,3 +5,4 @@ pydantic[email]==2.12.5
 uvicorn==0.38.0
 kafka-python==2.0.2
 aiokafka==0.8.0
+circuitbreaker==1.4.0
