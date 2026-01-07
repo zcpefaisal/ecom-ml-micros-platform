@@ -6,12 +6,16 @@ import logging
 
 from models import Order, OrderItem, OrderCreate, OrderRead, OrderStatus
 from database import create_db_and_tables, get_session
+from service_client import ServieClient
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Order Service", description="Order Service for ML Powerd E-commerce")
+
+# Initialize service client
+service_client = ServieClient()
 
 # CORS Middleware
 app.add_middleware(
@@ -34,7 +38,25 @@ def health_check():
 
 # Create a new order
 @app.post("/orders/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
-def create_order(order_data: OrderCreate, session: Session = Depends(get_session)):
+async def create_order(order_data: OrderCreate, session: Session = Depends(get_session)):
+
+    # Validate user existence using circuit breaker protected call
+    user = await service_client.get_user(order_data.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="User not found"
+        )
+    
+    # Validate products existence and get their details
+    for item in order_data.items:
+        product = await service_client.get_product(item.prodict_id)
+        if not product:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Product with ID {item.prodict_id} not found"
+            )
+        
 
     # Calculate item total price
     total_amount = sum(item.price * item.quantity for item in order_data.items)
