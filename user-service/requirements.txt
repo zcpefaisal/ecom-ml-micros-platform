@@ -12,4 +12,4 @@ bcrypt==4.0.1
 python-dotenv==1.2.1
 kafka-python==2.0.2
 aiokafka==0.8.0
-
+circuitbreaker==1.4.0
