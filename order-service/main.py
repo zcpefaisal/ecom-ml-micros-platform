@@ -8,6 +8,8 @@ import asyncio
 from models import Order, OrderItem, OrderCreate, OrderRead, OrderStatus
 from database import create_db_and_tables, get_session
 import event_consume
+from order_saga import OrderSaga
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -71,6 +73,34 @@ def create_order(order_data: OrderCreate, session: Session = Depends(get_session
     logger.info(f"Order created with ID: {db_order.id} for User ID: {db_order.user_id}")
 
     return db_order
+
+
+@app.post("/orders/saga/", status_code=status.HTTP_201_CREATED)
+async def create_order_with_saga(order_data: OrderCreate, session: Session = Depends(get_session)):
+    """Create order using saga pattern"""
+    # Calculate total amount
+    total_amount = sum(item.price * item.quantity for item in order_data.items)
+    
+    saga_data = {
+        "user_id": order_data.user_id,
+        "shipping_address": order_data.shipping_address,
+        "items": [item.dict() for item in order_data.items],
+        "total_amount": total_amount
+    }
+    
+    # Create and execute saga
+    order_saga = OrderSaga(saga_data, session)
+    success, order_id = await order_saga.create_order_saga()
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create order"
+        )
+    
+    return {"order_id": order_id, "message": "Order created successfully"}
+
+
 
 # Get order by ID
 @app.get("/orders/{order_id}", response_model=OrderRead)
