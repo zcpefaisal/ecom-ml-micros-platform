@@ -5,13 +5,13 @@ Designed and implemented a production-ready ecommerce platform with microservice
 
 ## 📁 Project Structure
 ecommerce-ml-platform/
-├── shared/ # Shared utilities
-├── api-gateway/ # API Gateway (FastAPI)
-├── user-service/ # User management
-├── product-service/ # Product catalog
-├── order-service/ # Order processing
-├── docker-compose.yml # Container orchestration
-└── README.md # This file
+- ├── shared/ # Shared utilities
+- ├── api-gateway/ # API Gateway (FastAPI)
+- ├── user-service/ # User management
+- ├── product-service/ # Product catalog
+- ├── order-service/ # Order processing
+- ├── docker-compose.yml # Container orchestration
+- └── README.md # This file
 
 
 ## 🛠️ Technologies
@@ -34,7 +34,7 @@ ecommerce-ml-platform/
 ### Installation
 ```bash
 # Clone repository
-git clone <your-repo>
+git clone <git@github.com:zcpefaisal/ecom-ml-micros-platform.git>
 cd ecommerce-ml-platform
 
 # Start all services
@@ -47,35 +47,35 @@ docker-compose ps
 
 ## 🚦 Access Services
 
-API Gateway: http://localhost:8000/docs
+- API Gateway: http://localhost:8000/docs
 
-User Service: http://localhost:8001/docs
+- User Service: http://localhost:8001/docs
 
-Product Service: http://localhost:8002/docs
+- Product Service: http://localhost:8002/docs
 
-Order Service: http://localhost:8003/docs
+- Order Service: http://localhost:8003/docs
 
-Kafka UI: http://localhost:8080
+- Kafka UI: http://localhost:8080
 
 
 ## 🗺️ Roadmap
 
-Basic microservices
+- Basic microservices
 
-Database integration
+- Database integration
 
-Event-driven architecture (Kafka)
+- Event-driven architecture (Kafka)
 
-Circuit breaker pattern
+- Circuit breaker pattern
 
-Saga pattern
+- Saga pattern
 
-ML Recommendation service
+- ML Recommendation service
 
-CI/CD pipeline
+- CI/CD pipeline
 
-Kubernetes deployment
+- Kubernetes deployment
 
-Monitoring & logging
+- Monitoring & logging
 
-Authentication & authorization
+- Authentication & authorization
